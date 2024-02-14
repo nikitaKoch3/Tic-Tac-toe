@@ -37,9 +37,15 @@ struct ContentView: View {
                             if isSquareOccupied (in: moves, forIndex: i) {
                                 moves[i] = Move(player: isHumanTurn ? .human: .computer, boardIndex: i)
                                 isGameBoardDisabled = true
+                                
                                 if checkWinCondition(for: .human, in: moves) {
                                     print("Human wins")
                                 }
+                                
+                                if checkForDraw(in: moves) {
+                                    print("draw")
+                                }
+                                
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                     let position = determineComputerMovePostion(in: moves)
                                     moves[position] = Move(player: .computer, boardIndex: position)
@@ -82,6 +88,9 @@ struct ContentView: View {
         
         
         return false
+    }
+    func checkForDraw(in moves: [Move?]) -> Bool {
+        return moves.compactMap{$0}.count == 9
     }
 }
 
