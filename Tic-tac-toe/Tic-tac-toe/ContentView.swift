@@ -7,52 +7,45 @@
 
 import SwiftUI
 
-struct ContentView: View {
-    private var columns: [GridItem] = [
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-    ]
-    @State private var moves: [Move?] = Array(repeating: nil, count: 9)
-    @State private var isHumanTurn: Bool = true
-    @State private var isGameBoardDisabled: Bool = false
-    @State private var alertItem: AlertItem?
+struct GameView: View {
+    @StateObject private var viewModel = GameViewModel()
+
     var body: some View {
         GeometryReader { geometry in
             VStack {
                 Spacer()
-                LazyVGrid(columns: columns, spacing: 5) {
+                LazyVGrid(columns: viewModel.columns, spacing: 5) {
                     ForEach(0..<9) { i in
                         ZStack {
                             Circle()
                                 .foregroundColor(.red.opacity(0.5))
                                 .frame(width: geometry.size.width/3 - 15, height: geometry.size.width/3 - 15)
-                            Image(systemName: moves[i]?.indicator ?? "")
+                            Image(systemName: viewModel.moves[i]?.indicator ?? "")
                                 .resizable()
                                 .frame(width: 40, height: 40)
                                 .font(.headline)
                                 .foregroundColor(.white)
                         }
                         .onTapGesture {
-                            if isSquareOccupied (in: moves, forIndex: i) {
-                                moves[i] = Move(player: isHumanTurn ? .human: .computer, boardIndex: i)
-                                isGameBoardDisabled = true
+                            if isSquareOccupied (in: viewModel.moves, forIndex: i) {
+                                viewModel.moves[i] = Move(player: .human, boardIndex: i)
+                                viewModel.isGameBoardDisabled = true
                                 
-                                if checkWinCondition(for: .human, in: moves) {
-                                    alertItem = AlertContext.humanWins
+                                if checkWinCondition(for: .human, in: viewModel.moves) {
+                                    viewModel.alertItem = AlertContext.humanWins
                                 }
                                 
-                                if checkForDraw(in: moves) {
-                                    alertItem = AlertContext.draw
+                                if checkForDraw(in: viewModel.moves) {
+                                    viewModel.alertItem = AlertContext.draw
                                 }
                                 
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                    let position = determineComputerMovePostion(in: moves)
-                                    moves[position] = Move(player: .computer, boardIndex: position)
-                                    isGameBoardDisabled = false
+                                    let position = determineComputerMovePostion(in: viewModel.moves)
+                                        viewModel.moves[position] = Move(player: .computer, boardIndex: position)
+                                    viewModel.isGameBoardDisabled = false
                                     
-                                    if checkWinCondition(for: .computer, in: moves) {
-                                        alertItem = AlertContext.computerWins
+                                    if checkWinCondition(for: .computer, in: viewModel.moves) {
+                                        viewModel.alertItem = AlertContext.computerWins
                                     }
                                 }
                             }
@@ -61,10 +54,10 @@ struct ContentView: View {
                 }
                 Spacer()
             }
-            .disabled(isGameBoardDisabled)
+            .disabled(viewModel.isGameBoardDisabled)
             .padding()
-            .alert(item: $alertItem) { alertItem in
-                Alert(title: alertItem.title, message: alertItem.message, dismissButton: .default(alertItem.buttonTitle, action: {
+            .alert(item: viewModel.$alertItem) { Item in
+                Alert(title: Item.title, message: Item.message, dismissButton: .default(Item.buttonTitle, action: {
                     print()
                     resetGame()
                 }))
@@ -141,7 +134,7 @@ struct ContentView: View {
     
     
     func resetGame() {
-        moves = Array(repeating: nil, count: 9)
+        viewModel.moves = Array(repeating: nil, count: 9)
     }
 }
 
@@ -159,5 +152,5 @@ struct Move {
 }
 
 #Preview {
-    ContentView()
+    GameView()
 }
